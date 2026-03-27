@@ -13,25 +13,19 @@ I was curious to see how tweaking individual components—like messing with the 
 
 
 1. The Manual Backpropagation NightmareUpdating every single weight manually in a Transformer is not just impossible—it’s risky due to the high probability of human error in calculus. To solve this, I implemented a Computational Graph approach. Every weight and operation was treated as a Node, allowing the engine to automatically handle the chain rule and backpropagate gradients through the entire network systematically.
-2.
-3.
-4.
-5. 2. The CPU & Memory Bottleneck (NumPy Constraints)Since I used NumPy, the training was restricted to the CPU, making it significantly slower than GPU-based training. Moreover, the memory footprint was huge, leading to frequent Out of Memory (OOM) errors. While the CPU limitation remained, I optimized memory by manually clearing gradients after every batch and simplifying the architecture to a $d_{model}$ of 128 and 1 Attention Head to keep the RAM usage stable.
-   3.
-   4.
-   5.
-   6.
-   7. 3. Explosive Softmax Scores & Weight InitializationInitially, I used naive random weight initialization, which caused the Softmax scores to explode into the range of $10^{12}$. This made the model untrainable. I fixed this by implementing two crucial steps: first, I normalized the MFCC input using $(x - \mu) / \sigma$, and second, I applied Xavier Normalization $\sqrt{6 / (fan\_in + fan\_out)}$ to the weights. This brought the activations back into a stable range.
-      4.
-      5.
-      6.
-      7. 4. Architecture vs. Information LossIn an attempt to save memory, I tried reducing $d_{model}$ to 64 and increasing heads to 8. However, this led to massive information loss. I also experimented with a complex 6-layer Encoder and 6-layer Decoder, but it resulted in Vanishing Gradients, where the model stopped learning entirely. I eventually found the "sweet spot" by simplifying the model to a 1-layer Encoder/Decoder setup to ensure stable gradient flow.
-         5.
-         6.
-         7.
-         8. 5. The Padding & Class Imbalance TrapDuring early training, my dataset had excessive padding, causing the model to overfit and predict only the <pad> token. Even after applying Masking during loss calculation, the model shifted to predicting only "Spaces" because they were the most frequent simple tokens. To solve this, I implemented Token Weighting (Class Weights) during training. By assigning higher importance to actual characters over spaces and pads, I forced the model to learn the actual Hindi phonemes, which significantly improved the output quality
+  
+  
+  
+ 2. The CPU & Memory Bottleneck (NumPy Constraints)Since I used NumPy, the training was restricted to the CPU, making it significantly slower than GPU-based training. Moreover, the memory footprint was huge, leading to frequent Out of Memory (OOM) errors. While the CPU limitation remained, I optimized memory by manually clearing gradients after every batch and simplifying the architecture to a $d_{model}$ of 128 and 1 Attention Head to keep the RAM usage stable.
+    
+    3. Explosive Softmax Scores & Weight InitializationInitially, I used naive random weight initialization, which caused the Softmax scores to explode into the range of $10^{12}$. This made the model untrainable. I fixed this by implementing two crucial steps: first, I normalized the MFCC input using $(x - \mu) / \sigma$, and second, I applied Xavier Normalization $\sqrt{6 / (fan\_in + fan\_out)}$ to the weights. This brought the activations back into a stable range.
+   
+       
+      5. Architecture vs. Information LossIn an attempt to save memory, I tried reducing $d_{model}$ to 64 and increasing heads to 8. However, this led to massive information loss. I also experimented with a complex 6-layer Encoder and 6-layer Decoder, but it resulted in Vanishing Gradients, where the model stopped learning entirely. I eventually found the "sweet spot" by simplifying the model to a 1-layer Encoder/Decoder setup to ensure stable gradient flow.
+         
+          5. The Padding & Class Imbalance TrapDuring early training, my dataset had excessive padding, causing the model to overfit and predict only the <pad> token. Even after applying Masking during loss calculation, the model shifted to predicting only "Spaces" because they were the most frequent simple tokens. To solve this, I implemented Token Weighting (Class Weights) during training. By assigning higher importance to actual characters over spaces and pads, I forced the model to learn the actual Hindi phonemes, which significantly improved the output quality
            
-            6. 
+             
 Currently working on implementing Beam Search to further refine the Hindi sentence structure
 
 
